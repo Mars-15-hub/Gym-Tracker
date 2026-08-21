@@ -2,18 +2,24 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
+    "seed": "node seed.js",
+    "install-all": "npm install --prefix frontend && npm install --prefix backend",
+    "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "seed": "node seed.js"
+    "start": "nodemon app"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^9.9.3"
+    "helmet": "^8.3.0",
+    "mongoose": "^9.9.3",
+    "morgan": "^1.11.0"
   }
 }
