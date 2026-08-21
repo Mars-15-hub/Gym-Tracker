@@ -53,8 +53,57 @@ const getWorkoutById = async (req, res, next) => {
   }
 };
 
+const updateWorkout = async (req, res, next) => {
+  try {
+    const { name, date, duration } = req.body;
+
+    const workout = await Workout.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        date,
+        duration,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).populate("user");
+
+    if (!workout) {
+      return res.status(404).json({
+        message: "Workout not found",
+      });
+    }
+
+    res.status(200).json(workout);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteWorkout = async (req, res, next) => {
+  try {
+    const workout = await Workout.findByIdAndDelete(req.params.id);
+
+    if (!workout) {
+      return res.status(404).json({
+        message: "Workout not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Workout deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createWorkout,
   getWorkouts,
   getWorkoutById,
+  updateWorkout,
+  deleteWorkout
 };
