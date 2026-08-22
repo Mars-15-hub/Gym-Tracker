@@ -1,5 +1,7 @@
+const API_URL = "http://localhost:3001/api";
+
 const signup = async (userData) => {
-  const response = await fetch(`${process.env.API_URL}/auth/signup`, {
+  const response = await fetch(`${API_URL}/auth/signup`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -34,4 +36,7 @@ const login = async (credentials) => {
   return data;
 };
 
-export { signup, login };
+export {
+  signup,
+  login,
+};
