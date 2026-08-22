@@ -1,11 +1,39 @@
+import Workout from "../model/schema/workoutSchema.js";
 import WorkoutExercise from "../model/schema/workoutExerciseSchema.js";
 import Set from "../model/schema/setSchema.js";
 
-const getSets = async (req, res, next) => {
+const getOwnedWorkoutExercise = async (
+  workoutExerciseId,
+  userId
+) => {
+  const workoutExercise = await WorkoutExercise.findById(
+    workoutExerciseId
+  );
+
+  if (!workoutExercise) {
+    return null;
+  }
+
+  const workout = await Workout.findOne({
+    _id: workoutExercise.workout,
+    user: userId,
+  });
+
+  if (!workout) {
+    return null;
+  }
+
+  return workoutExercise;
+};
+
+const getSets = async (req, res) => {
   try {
     const { workoutExerciseId } = req.params;
 
-    const workoutExercise = await WorkoutExercise.findById(workoutExerciseId);
+    const workoutExercise = await getOwnedWorkoutExercise(
+      workoutExerciseId,
+      req.user._id
+    );
 
     if (!workoutExercise) {
       return res.status(404).json({
@@ -25,78 +53,23 @@ const getSets = async (req, res, next) => {
       });
     }
 
-    next(error);
-  }
-};
-
-const createSet = async (req, res, next) => {
-  try {
-    const { setNumber, weight, reps } = req.body;
-    const { workoutExerciseId } = req.params;
-
-    if (setNumber === undefined || weight === undefined || reps === undefined) {
-      return res.status(400).json({
-        message: "Set number, weight and reps are required",
-      });
-    }
-
-    if (setNumber < 1) {
-      return res.status(400).json({
-        message: "Set number must be at least 1",
-      });
-    }
-
-    if (weight < 0) {
-      return res.status(400).json({
-        message: "Weight cannot be negative",
-      });
-    }
-
-    if (reps < 1) {
-      return res.status(400).json({
-        message: "Reps must be at least 1",
-      });
-    }
-
-    const workoutExercise = await WorkoutExercise.findById(workoutExerciseId);
-
-    if (!workoutExercise) {
-      return res.status(404).json({
-        message: "Workout exercise not found",
-      });
-    }
-
-    const newSet = await Set.create({
-      workoutExercise: workoutExerciseId,
-      setNumber,
-      weight,
-      reps,
+    res.status(500).json({
+      message: "Failed to fetch sets",
+      error: error.message,
     });
-
-    res.status(201).json(newSet);
-  } catch (error) {
-    if (error.name === "CastError") {
-      return res.status(400).json({
-        message: "Invalid workout exercise ID",
-      });
-    }
-
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        message: "Invalid set data",
-        error: error.message,
-      });
-    }
-
-    next(error);
   }
 };
 
-const updateSet = async (req, res, next) => {
+const createSet = async (req, res) => {
   try {
+    const { workoutExerciseId } = req.params;
     const { setNumber, weight, reps } = req.body;
 
-    if (setNumber === undefined || weight === undefined || reps === undefined) {
+    if (
+      setNumber === undefined ||
+      weight === undefined ||
+      reps === undefined
+    ) {
       return res.status(400).json({
         message: "Set number, weight and reps are required",
       });
@@ -108,26 +81,79 @@ const updateSet = async (req, res, next) => {
       });
     }
 
-    const updatedSet = await Set.findByIdAndUpdate(
-      req.params.id,
-      {
-        setNumber,
-        weight,
-        reps,
-      },
-      {
-        new: true,
-        runValidators: true,
-      },
+    const workoutExercise = await getOwnedWorkoutExercise(
+      workoutExerciseId,
+      req.user._id
     );
 
-    if (!updatedSet) {
+    if (!workoutExercise) {
+      return res.status(404).json({
+        message: "Workout exercise not found",
+      });
+    }
+
+    const set = await Set.create({
+      workoutExercise: workoutExerciseId,
+      setNumber,
+      weight,
+      reps,
+    });
+
+    res.status(201).json(set);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to create set",
+      error: error.message,
+    });
+  }
+};
+
+const updateSet = async (req, res) => {
+  try {
+    const { setNumber, weight, reps } = req.body;
+
+    if (
+      setNumber === undefined ||
+      weight === undefined ||
+      reps === undefined
+    ) {
+      return res.status(400).json({
+        message: "Set number, weight and reps are required",
+      });
+    }
+
+    if (setNumber < 1 || weight < 0 || reps < 1) {
+      return res.status(400).json({
+        message: "Invalid set values",
+      });
+    }
+
+    const set = await Set.findById(req.params.id);
+
+    if (!set) {
       return res.status(404).json({
         message: "Set not found",
       });
     }
 
-    res.status(200).json(updatedSet);
+    const workoutExercise = await getOwnedWorkoutExercise(
+      set.workoutExercise,
+      req.user._id
+    );
+
+    if (!workoutExercise) {
+      return res.status(404).json({
+        message: "Set not found",
+      });
+    }
+
+    set.setNumber = setNumber;
+    set.weight = weight;
+    set.reps = reps;
+
+    await set.save();
+
+    res.status(200).json(set);
   } catch (error) {
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -135,26 +161,35 @@ const updateSet = async (req, res, next) => {
       });
     }
 
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        message: "Invalid set data",
-        error: error.message,
-      });
-    }
-
-    next(error);
+    res.status(500).json({
+      message: "Failed to update set",
+      error: error.message,
+    });
   }
 };
 
-const deleteSet = async (req, res, next) => {
+const deleteSet = async (req, res) => {
   try {
-    const deletedSet = await Set.findByIdAndDelete(req.params.id);
+    const set = await Set.findById(req.params.id);
 
-    if (!deletedSet) {
+    if (!set) {
       return res.status(404).json({
         message: "Set not found",
       });
     }
+
+    const workoutExercise = await getOwnedWorkoutExercise(
+      set.workoutExercise,
+      req.user._id
+    );
+
+    if (!workoutExercise) {
+      return res.status(404).json({
+        message: "Set not found",
+      });
+    }
+
+    await Set.findByIdAndDelete(set._id);
 
     res.status(200).json({
       message: "Set deleted successfully",
@@ -166,8 +201,16 @@ const deleteSet = async (req, res, next) => {
       });
     }
 
-    next(error);
+    res.status(500).json({
+      message: "Failed to delete set",
+      error: error.message,
+    });
   }
 };
 
-export { getSets, createSet, updateSet, deleteSet };
+export {
+  getSets,
+  createSet,
+  updateSet,
+  deleteSet,
+};

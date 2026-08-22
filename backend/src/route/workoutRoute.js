@@ -53,7 +53,7 @@ router.post(
 );
 
 router.delete(
-  "/:workoutId/exercises/:exerciseId",
+  "/:workoutId/exercises/:workoutExerciseId",
   protect,
   deleteWorkoutExercise
 );

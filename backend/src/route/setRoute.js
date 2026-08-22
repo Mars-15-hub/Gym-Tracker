@@ -1,4 +1,5 @@
 import express from "express";
+import protect from "../middleware/authMiddleware.js";
 
 import {
   updateSet,
@@ -7,7 +8,7 @@ import {
 
 const router = express.Router();
 
-router.put("/:id", updateSet);
-router.delete("/:id", deleteSet);
+router.put("/:id", protect, updateSet);
+router.delete("/:id", protect, deleteSet);
 
 export default router;

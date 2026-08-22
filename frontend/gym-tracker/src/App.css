@@ -261,3 +261,87 @@ main {
 .edit-form h3 {
   margin-top: 0;
 }
+
+.workout-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-group label {
+  font-weight: 600;
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+}
+
+@media (max-width: 600px) {
+  .workout-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    gap: 16px;
+    flex-direction: column;
+  }
+}
+
+.workout-details {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.workout-details > h4 {
+  margin-top: 0;
+}
+
+.workout-exercise-display {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.exercise-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.exercise-title span {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.sets-display {
+  display: grid;
+  gap: 6px;
+}
+
+.sets-display-header,
+.sets-display-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.sets-display-header {
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+}
