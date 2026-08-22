@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { createWorkout } from "../services/workoutService";
+import useAuth from "../hooks/useAuth";
 
-const WorkoutForm = ({ onWorkoutCreated, onCancel }) => {
+const WorkoutForm = ({
+  onWorkoutCreated,
+  onCancel,
+}) => {
+  const { user } = useAuth();
+
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [duration, setDuration] = useState("");
@@ -18,17 +24,27 @@ const WorkoutForm = ({ onWorkoutCreated, onCancel }) => {
       return;
     }
 
+    if (name.trim().length < 2) {
+      setError(
+        "Workout name must contain at least 2 characters"
+      );
+      return;
+    }
+
     try {
       setLoading(true);
 
       const workout = {
-        user: "6a88538d6b07bd6a43ebeea3",
+        user: user._id,
         name: name.trim(),
         date: date || undefined,
-        duration: duration ? Number(duration) * 60 : undefined,
+        duration: duration
+          ? Number(duration) * 60
+          : undefined,
       };
 
-      const createdWorkout = await createWorkout(workout);
+      const createdWorkout =
+        await createWorkout(workout);
 
       onWorkoutCreated(createdWorkout);
 
@@ -46,52 +62,76 @@ const WorkoutForm = ({ onWorkoutCreated, onCancel }) => {
     <div className="form-container">
       <h2>Create Workout</h2>
 
-      {error && <p className="form-error">{error}</p>}
+      {error && (
+        <p className="form-error">
+          {error}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="name">Workout Name</label>
+          <label htmlFor="name">
+            Workout Name
+          </label>
 
           <input
             id="name"
             type="text"
             value={name}
-            onChange={(event) => setName(event.target.value)}
+            onChange={(event) =>
+              setName(event.target.value)
+            }
             placeholder="e.g. Push Day"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="date">Date</label>
+          <label htmlFor="date">
+            Date
+          </label>
 
           <input
             id="date"
             type="date"
             value={date}
-            onChange={(event) => setDate(event.target.value)}
+            onChange={(event) =>
+              setDate(event.target.value)
+            }
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="duration">Duration (minutes)</label>
+          <label htmlFor="duration">
+            Duration (minutes)
+          </label>
 
           <input
             id="duration"
             type="number"
             min="0"
             value={duration}
-            onChange={(event) => setDuration(event.target.value)}
+            onChange={(event) =>
+              setDuration(event.target.value)
+            }
             placeholder="60"
           />
         </div>
 
         <div className="form-actions">
-          <button type="button" onClick={onCancel}>
+          <button
+            type="button"
+            onClick={onCancel}
+          >
             Cancel
           </button>
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Creating..." : "Create Workout"}
+          <button
+            type="submit"
+            disabled={loading}
+          >
+            {loading
+              ? "Creating..."
+              : "Create Workout"}
           </button>
         </div>
       </form>
