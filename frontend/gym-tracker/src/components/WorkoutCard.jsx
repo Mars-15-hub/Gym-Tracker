@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
 import WorkoutEditForm from "./WorkoutEditForm";
+import LoadingSpinner from "./LoadingSpinner";
+import ErrorMessage from "./ErrorMessage";
 
 import {
   deleteWorkout,
@@ -16,32 +22,57 @@ const WorkoutCard = ({
 }) => {
   const { token } = useAuth();
 
-  const [editing, setEditing] = useState(false);
-  const [details, setDetails] = useState([]);
-  const [detailsLoading, setDetailsLoading] =
-    useState(true);
+  const [editing, setEditing] =
+    useState(false);
 
-  const [error, setError] = useState("");
-  const [deleting, setDeleting] = useState(false);
+  const [details, setDetails] =
+    useState([]);
 
-  useEffect(() => {
-    const fetchDetails = async () => {
+  const [
+    detailsLoading,
+    setDetailsLoading,
+  ] = useState(true);
+
+  const [
+    detailsError,
+    setDetailsError,
+  ] = useState("");
+
+  const [
+    actionError,
+    setActionError,
+  ] = useState("");
+
+  const [deleting, setDeleting] =
+    useState(false);
+
+  const loadDetails = useCallback(
+    async () => {
       try {
-        const data = await getWorkoutExercises(
-          workout._id,
-          token
-        );
+        setDetailsLoading(true);
+        setDetailsError("");
+
+        const data =
+          await getWorkoutExercises(
+            workout._id,
+            token
+          );
 
         setDetails(data);
       } catch (error) {
-        setError(error.message);
+        setDetailsError(
+          error.message
+        );
       } finally {
         setDetailsLoading(false);
       }
-    };
+    },
+    [workout._id, token]
+  );
 
-    fetchDetails();
-  }, [workout, token]);
+  useEffect(() => {
+    loadDetails();
+  }, [loadDetails]);
 
   const handleDelete = async () => {
     const confirmed = window.confirm(
@@ -54,16 +85,20 @@ const WorkoutCard = ({
 
     try {
       setDeleting(true);
-      setError("");
+      setActionError("");
 
       await deleteWorkout(
         workout._id,
         token
       );
 
-      onWorkoutDeleted(workout._id);
+      onWorkoutDeleted(
+        workout._id
+      );
     } catch (error) {
-      setError(error.message);
+      setActionError(
+        error.message
+      );
     } finally {
       setDeleting(false);
     }
@@ -72,55 +107,55 @@ const WorkoutCard = ({
   const handleUpdated = async (
     updatedWorkout
   ) => {
-    onWorkoutUpdated(updatedWorkout);
+    onWorkoutUpdated(
+      updatedWorkout
+    );
 
-    try {
-      const updatedDetails =
-        await getWorkoutExercises(
-          updatedWorkout._id,
-          token
-        );
+    await loadDetails();
 
-      setDetails(updatedDetails);
-      setEditing(false);
-    } catch (error) {
-      setError(error.message);
-    }
+    setEditing(false);
   };
 
   if (editing) {
     return (
-      <div className="workout-card">
+      <article className="workout-card">
         <WorkoutEditForm
           workout={workout}
           workoutExercises={details}
-          onWorkoutUpdated={handleUpdated}
-          onCancel={() => setEditing(false)}
+          onWorkoutUpdated={
+            handleUpdated
+          }
+          onCancel={() =>
+            setEditing(false)
+          }
         />
-      </div>
+      </article>
     );
   }
 
   return (
-    <div className="workout-card">
+    <article className="workout-card">
       <div className="workout-card-header">
         <div>
           <h3>{workout.name}</h3>
 
-          <p>
-            Date:{" "}
-            {new Date(
-              workout.date
-            ).toLocaleDateString()}
-          </p>
+          <div className="workout-meta">
+            <span>
+              {new Date(
+                workout.date
+              ).toLocaleDateString()}
+            </span>
 
-          <p>
-            Duration:{" "}
-            {Math.round(
-              (workout.duration || 0) / 60
-            )}{" "}
-            minutes
-          </p>
+            <span>•</span>
+
+            <span>
+              {Math.round(
+                (workout.duration || 0) /
+                  60
+              )}{" "}
+              min
+            </span>
+          </div>
         </div>
       </div>
 
@@ -128,75 +163,103 @@ const WorkoutCard = ({
         <h4>Exercises</h4>
 
         {detailsLoading ? (
-          <p>Loading exercises...</p>
+          <LoadingSpinner message="Loading exercises..." />
+        ) : detailsError ? (
+          <ErrorMessage
+            message={detailsError}
+            onRetry={loadDetails}
+          />
         ) : details.length === 0 ? (
-          <p>No exercises added.</p>
+          <p className="muted-text">
+            No exercises added.
+          </p>
         ) : (
-          details.map((workoutExercise) => (
-            <div
-              className="workout-exercise-display"
-              key={workoutExercise._id}
-            >
-              <div className="exercise-title">
-                <strong>
-                  {workoutExercise.exercise.name}
-                </strong>
+          details.map(
+            (workoutExercise) => (
+              <div
+                className="workout-exercise-display"
+                key={
+                  workoutExercise._id
+                }
+              >
+                <div className="exercise-title">
+                  <strong>
+                    {
+                      workoutExercise
+                        .exercise.name
+                    }
+                  </strong>
 
-                <span>
-                  {
-                    workoutExercise.exercise
-                      .muscleGroup
-                  }
-                </span>
-              </div>
-
-              {workoutExercise.sets.length ===
-              0 ? (
-                <p>No sets recorded.</p>
-              ) : (
-                <div className="sets-display">
-                  <div className="sets-display-header">
-                    <span>Set</span>
-                    <span>Weight</span>
-                    <span>Reps</span>
-                  </div>
-
-                  {workoutExercise.sets.map(
-                    (set) => (
-                      <div
-                        className="sets-display-row"
-                        key={set._id}
-                      >
-                        <span>
-                          {set.setNumber}
-                        </span>
-
-                        <span>
-                          {set.weight} kg
-                        </span>
-
-                        <span>{set.reps}</span>
-                      </div>
-                    )
-                  )}
+                  <span>
+                    {
+                      workoutExercise
+                        .exercise
+                        .muscleGroup
+                    }
+                  </span>
                 </div>
-              )}
-            </div>
-          ))
+
+                {workoutExercise.sets
+                  .length === 0 ? (
+                  <p className="muted-text">
+                    No sets recorded.
+                  </p>
+                ) : (
+                  <div className="sets-display">
+                    <div className="sets-display-header">
+                      <span>Set</span>
+                      <span>
+                        Weight
+                      </span>
+                      <span>Reps</span>
+                    </div>
+
+                    {workoutExercise.sets.map(
+                      (set) => (
+                        <div
+                          className="sets-display-row"
+                          key={set._id}
+                        >
+                          <span>
+                            {
+                              set.setNumber
+                            }
+                          </span>
+
+                          <span>
+                            {set.weight} kg
+                          </span>
+
+                          <span>
+                            {set.reps}
+                          </span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          )
         )}
       </div>
 
-      {error && (
-        <p className="form-error">
-          {error}
-        </p>
+      {actionError && (
+        <ErrorMessage
+          message={actionError}
+        />
       )}
 
       <div className="workout-actions">
         <button
           className="edit-button"
-          onClick={() => setEditing(true)}
-          disabled={detailsLoading}
+          onClick={() =>
+            setEditing(true)
+          }
+          disabled={
+            detailsLoading ||
+            Boolean(detailsError)
+          }
         >
           Edit
         </button>
@@ -211,7 +274,7 @@ const WorkoutCard = ({
             : "Delete"}
         </button>
       </div>
-    </div>
+    </article>
   );
 };
 

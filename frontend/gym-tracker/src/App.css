@@ -345,3 +345,116 @@ main {
   font-weight: 600;
   border-bottom: 1px solid #e5e7eb;
 }
+
+.page-description {
+  margin: 6px 0 0;
+  color: #6b7280;
+}
+
+.page-center {
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  color: #6b7280;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #1f2937;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-state {
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+}
+
+.error-state p {
+  margin: 0;
+}
+
+.retry-button {
+  margin-top: 10px;
+  background: #991b1b;
+  color: white;
+}
+
+.refresh-status {
+  text-align: right;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.empty-state h2 {
+  margin-top: 0;
+}
+
+.empty-state p {
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.workout-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 22px;
+}
+
+.workout-card-header h3 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.workout-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #6b7280;
+}
+
+.muted-text {
+  color: #6b7280;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input:focus,
+select:focus {
+  outline: 2px solid #1f2937;
+  outline-offset: 1px;
+}

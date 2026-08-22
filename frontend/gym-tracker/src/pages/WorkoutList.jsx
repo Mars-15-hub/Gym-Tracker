@@ -1,7 +1,13 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
 import WorkoutCard from "../components/WorkoutCard";
 import WorkoutForm from "../components/WorkoutForm";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorMessage from "../components/ErrorMessage";
 
 import {
   getWorkouts,
@@ -13,36 +19,51 @@ const WorkoutList = () => {
   const { token } = useAuth();
 
   const [workouts, setWorkouts] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  const [initialLoading, setInitialLoading] =
+    useState(true);
+
+  const [refreshing, setRefreshing] =
+    useState(false);
+
   const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false);
 
-  const [search, setSearch] = useState("");
-  const [durationFilter, setDurationFilter] =
-    useState("all");
+  const [showForm, setShowForm] =
+    useState(false);
 
-  useEffect(() => {
-    const fetchWorkouts = async (
-      showLoading = false
-    ) => {
+  const [search, setSearch] =
+    useState("");
+
+  const [
+    durationFilter,
+    setDurationFilter,
+  ] = useState("all");
+
+  const fetchWorkouts = useCallback(
+    async (initial = false) => {
       try {
-        if (showLoading) {
-          setLoading(true);
+        if (initial) {
+          setInitialLoading(true);
+        } else {
+          setRefreshing(true);
         }
 
-        const data = await getWorkouts(token);
+        const data =
+          await getWorkouts(token);
 
         setWorkouts(data);
         setError("");
       } catch (error) {
         setError(error.message);
       } finally {
-        if (showLoading) {
-          setLoading(false);
-        }
+        setInitialLoading(false);
+        setRefreshing(false);
       }
-    };
+    },
+    [token]
+  );
 
+  useEffect(() => {
     fetchWorkouts(true);
 
     const interval = setInterval(() => {
@@ -52,9 +73,11 @@ const WorkoutList = () => {
     return () => {
       clearInterval(interval);
     };
-  }, [token]);
+  }, [fetchWorkouts]);
 
-  const handleWorkoutCreated = (workout) => {
+  const handleWorkoutCreated = (
+    workout
+  ) => {
     setWorkouts((currentWorkouts) => [
       workout,
       ...currentWorkouts,
@@ -68,14 +91,17 @@ const WorkoutList = () => {
   ) => {
     setWorkouts((currentWorkouts) =>
       currentWorkouts.map((workout) =>
-        workout._id === updatedWorkout._id
+        workout._id ===
+        updatedWorkout._id
           ? updatedWorkout
           : workout
       )
     );
   };
 
-  const handleWorkoutDeleted = (workoutId) => {
+  const handleWorkoutDeleted = (
+    workoutId
+  ) => {
     setWorkouts((currentWorkouts) =>
       currentWorkouts.filter(
         (workout) =>
@@ -84,44 +110,70 @@ const WorkoutList = () => {
     );
   };
 
-  const filteredWorkouts = workouts.filter(
-    (workout) => {
+  const filteredWorkouts =
+    workouts.filter((workout) => {
       const matchesSearch =
         workout.name
           .toLowerCase()
-          .includes(search.toLowerCase());
+          .includes(
+            search
+              .trim()
+              .toLowerCase()
+          );
 
       const durationMinutes =
         (workout.duration || 0) / 60;
 
       let matchesDuration = true;
 
-      if (durationFilter === "short") {
+      if (
+        durationFilter === "short"
+      ) {
         matchesDuration =
           durationMinutes <= 45;
       }
 
-      if (durationFilter === "medium") {
+      if (
+        durationFilter === "medium"
+      ) {
         matchesDuration =
           durationMinutes > 45 &&
           durationMinutes <= 60;
       }
 
-      if (durationFilter === "long") {
+      if (
+        durationFilter === "long"
+      ) {
         matchesDuration =
           durationMinutes > 60;
       }
 
       return (
-        matchesSearch && matchesDuration
+        matchesSearch &&
+        matchesDuration
       );
-    }
-  );
+    });
 
-  if (loading) {
+  if (initialLoading) {
     return (
-      <main>
-        <p>Loading workouts...</p>
+      <main className="page-center">
+        <LoadingSpinner message="Loading your workouts..." />
+      </main>
+    );
+  }
+
+  if (
+    error &&
+    workouts.length === 0
+  ) {
+    return (
+      <main className="page-center">
+        <ErrorMessage
+          message={error}
+          onRetry={() =>
+            fetchWorkouts(true)
+          }
+        />
       </main>
     );
   }
@@ -129,7 +181,14 @@ const WorkoutList = () => {
   return (
     <main>
       <div className="page-header">
-        <h1>My Workouts</h1>
+        <div>
+          <h1>My Workouts</h1>
+
+          <p className="page-description">
+            Track your exercises, sets and
+            progress.
+          </p>
+        </div>
 
         {!showForm && (
           <button
@@ -143,10 +202,19 @@ const WorkoutList = () => {
         )}
       </div>
 
+      {refreshing && (
+        <div className="refresh-status">
+          Refreshing workouts...
+        </div>
+      )}
+
       {error && (
-        <p className="form-error">
-          {error}
-        </p>
+        <ErrorMessage
+          message={error}
+          onRetry={() =>
+            fetchWorkouts(false)
+          }
+        />
       )}
 
       {showForm && (
@@ -173,7 +241,9 @@ const WorkoutList = () => {
               placeholder="Search workouts..."
               value={search}
               onChange={(event) =>
-                setSearch(event.target.value)
+                setSearch(
+                  event.target.value
+                )
               }
             />
           </div>
@@ -213,8 +283,13 @@ const WorkoutList = () => {
       )}
 
       {workouts.length === 0 ? (
-        <div className="empty-workouts">
-          <p>No workouts yet.</p>
+        <div className="empty-state">
+          <h2>No workouts yet</h2>
+
+          <p>
+            Create your first workout and
+            start tracking your progress.
+          </p>
 
           {!showForm && (
             <button
@@ -227,10 +302,14 @@ const WorkoutList = () => {
             </button>
           )}
         </div>
-      ) : filteredWorkouts.length === 0 ? (
-        <div className="empty-workouts">
+      ) : filteredWorkouts.length ===
+        0 ? (
+        <div className="empty-state">
+          <h2>No workouts found</h2>
+
           <p>
-            No workouts match your search.
+            Try changing your search or
+            duration filter.
           </p>
         </div>
       ) : (
