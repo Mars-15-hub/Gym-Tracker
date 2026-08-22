@@ -1,20 +1,36 @@
 import { useEffect, useState } from "react";
+
 import WorkoutCard from "../components/WorkoutCard";
 import WorkoutForm from "../components/WorkoutForm";
-import { getWorkouts } from "../services/workoutService";
+
+import {
+  getWorkouts,
+} from "../services/workoutService";
+
+import useAuth from "../hooks/useAuth";
 
 const WorkoutList = () => {
-  const [workouts, setWorkouts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const { token } = useAuth();
+
+  const [workouts, setWorkouts] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [showForm, setShowForm] =
+    useState(false);
 
   useEffect(() => {
     const fetchWorkouts = async () => {
       try {
         setLoading(true);
 
-        const data = await getWorkouts();
+        const data =
+          await getWorkouts(token);
 
         setWorkouts(data);
       } catch (error) {
@@ -25,7 +41,7 @@ const WorkoutList = () => {
     };
 
     fetchWorkouts();
-  }, []);
+  }, [token]);
 
   const handleWorkoutCreated = (workout) => {
     setWorkouts((currentWorkouts) => [

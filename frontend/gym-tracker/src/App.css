@@ -160,3 +160,76 @@ main {
 .footer p {
   margin: 0;
 }
+
+.exercise-form {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.exercise-header h4 {
+  margin: 0;
+}
+
+.form-group select {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+}
+
+.sets-header,
+.set-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 100px;
+  gap: 10px;
+  align-items: center;
+}
+
+.sets-header {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.set-row {
+  margin-bottom: 10px;
+}
+
+.set-row input {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.secondary-button {
+  background: #e5e7eb;
+  color: #1f2937;
+  margin-top: 8px;
+}
+
+.secondary-button:hover {
+  background: #d1d5db;
+}
+
+.remove-button {
+  background: none;
+  color: #dc2626;
+  padding: 6px;
+}
+
+.remove-button:hover {
+  text-decoration: underline;
+}
+
+.add-exercise-button {
+  margin-bottom: 24px;
+}

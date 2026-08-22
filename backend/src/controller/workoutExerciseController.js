@@ -13,7 +13,10 @@ const createWorkoutExercise = async (req, res, next) => {
       });
     }
 
-    const workout = await Workout.findById(workoutId);
+    const workout = await Workout.findOne({
+      _id: workoutId,
+      user: req.user._id,
+    });
 
     if (!workout) {
       return res.status(404).json({
@@ -21,18 +24,30 @@ const createWorkoutExercise = async (req, res, next) => {
       });
     }
 
-    const existingExercise = await Exercise.findById(exercise);
+    const exerciseExists = await Exercise.findById(exercise);
 
-    if (!existingExercise) {
+    if (!exerciseExists) {
       return res.status(404).json({
         message: "Exercise not found",
+      });
+    }
+
+    const existingWorkoutExercise =
+      await WorkoutExercise.findOne({
+        workout: workoutId,
+        exercise,
+      });
+
+    if (existingWorkoutExercise) {
+      return res.status(409).json({
+        message: "Exercise is already part of this workout",
       });
     }
 
     const workoutExercise = await WorkoutExercise.create({
       workout: workoutId,
       exercise,
-      order: order || 1,
+      order,
     });
 
     const populatedWorkoutExercise =

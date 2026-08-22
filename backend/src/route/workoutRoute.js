@@ -1,5 +1,7 @@
 import express from "express";
 
+import protect from "../middleware/authMiddleware.js";
+
 import {
   createWorkout,
   getWorkouts,
@@ -16,16 +18,43 @@ import {
 
 const router = express.Router();
 
-router.post("/", createWorkout);
-router.get("/", getWorkouts);
-router.get("/:id/exercises", getWorkoutExercises);
-router.get("/:id", getWorkoutById);
-router.put("/:id", updateWorkout);
-router.delete("/:id", deleteWorkout);
+router.post("/", protect, createWorkout);
 
-router.post("/:workoutId/exercises", createWorkoutExercise);
+router.get("/", protect, getWorkouts);
+
+router.get(
+  "/:id/exercises",
+  protect,
+  getWorkoutExercises
+);
+
+router.get(
+  "/:id",
+  protect,
+  getWorkoutById
+);
+
+router.put(
+  "/:id",
+  protect,
+  updateWorkout
+);
+
+router.delete(
+  "/:id",
+  protect,
+  deleteWorkout
+);
+
+router.post(
+  "/:workoutId/exercises",
+  protect,
+  createWorkoutExercise
+);
+
 router.delete(
   "/:workoutId/exercises/:exerciseId",
+  protect,
   deleteWorkoutExercise
 );
 

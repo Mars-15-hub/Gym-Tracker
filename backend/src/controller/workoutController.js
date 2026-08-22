@@ -1,21 +1,24 @@
 import Workout from "../model/schema/workoutSchema.js";
 import WorkoutExercise from "../model/schema/workoutExerciseSchema.js";
 import Set from "../model/schema/setSchema.js";
-import User from "../model/schema/userSchema.js";
 
-const createWorkout = async (req, res, next) => {
+const createWorkout = async (req, res) => {
   try {
-    const { user, name, date, duration } = req.body;
+    const { name, date, duration } = req.body;
 
-    if (!user || !name) {
+    if (!name) {
       return res.status(400).json({
-        message: "User and workout name are required",
+        message: "Workout name is required",
       });
     }
 
-    if (typeof name !== "string" || name.trim().length < 2) {
+    if (
+      typeof name !== "string" ||
+      name.trim().length < 2
+    ) {
       return res.status(400).json({
-        message: "Workout name must contain at least 2 characters",
+        message:
+          "Workout name must contain at least 2 characters",
       });
     }
 
@@ -29,7 +32,7 @@ const createWorkout = async (req, res, next) => {
     }
 
     const workout = await Workout.create({
-      user,
+      user: req.user._id,
       name: name.trim(),
       date,
       duration,
@@ -44,29 +47,36 @@ const createWorkout = async (req, res, next) => {
       });
     }
 
-    if (error.name === "CastError") {
-      return res.status(400).json({
-        message: "Invalid user ID",
-      });
-    }
-
-    next(error);
+    res.status(500).json({
+      message: "Failed to create workout",
+      error: error.message,
+    });
   }
 };
 
-const getWorkouts = async (req, res, next) => {
+const getWorkouts = async (req, res) => {
   try {
-    const workouts = await Workout.find().populate("user").sort({ date: -1 });
+    const workouts = await Workout.find({
+      user: req.user._id,
+    })
+      .populate("user", "name email")
+      .sort({ date: -1 });
 
     res.status(200).json(workouts);
   } catch (error) {
-    next(error);
+    res.status(500).json({
+      message: "Failed to fetch workouts",
+      error: error.message,
+    });
   }
 };
 
-const getWorkoutById = async (req, res, next) => {
+const getWorkoutById = async (req, res) => {
   try {
-    const workout = await Workout.findById(req.params.id).populate("user");
+    const workout = await Workout.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    }).populate("user", "name email");
 
     if (!workout) {
       return res.status(404).json({
@@ -82,11 +92,14 @@ const getWorkoutById = async (req, res, next) => {
       });
     }
 
-    next(error);
+    res.status(500).json({
+      message: "Failed to fetch workout",
+      error: error.message,
+    });
   }
 };
 
-const updateWorkout = async (req, res, next) => {
+const updateWorkout = async (req, res) => {
   try {
     const { name, date, duration } = req.body;
 
@@ -96,9 +109,13 @@ const updateWorkout = async (req, res, next) => {
       });
     }
 
-    if (typeof name !== "string" || name.trim().length < 2) {
+    if (
+      typeof name !== "string" ||
+      name.trim().length < 2
+    ) {
       return res.status(400).json({
-        message: "Workout name must contain at least 2 characters",
+        message:
+          "Workout name must contain at least 2 characters",
       });
     }
 
@@ -111,8 +128,11 @@ const updateWorkout = async (req, res, next) => {
       });
     }
 
-    const workout = await Workout.findByIdAndUpdate(
-      req.params.id,
+    const workout = await Workout.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        user: req.user._id,
+      },
       {
         name: name.trim(),
         date,
@@ -121,8 +141,8 @@ const updateWorkout = async (req, res, next) => {
       {
         new: true,
         runValidators: true,
-      },
-    ).populate("user");
+      }
+    ).populate("user", "name email");
 
     if (!workout) {
       return res.status(404).json({
@@ -145,13 +165,19 @@ const updateWorkout = async (req, res, next) => {
       });
     }
 
-    next(error);
+    res.status(500).json({
+      message: "Failed to update workout",
+      error: error.message,
+    });
   }
 };
 
-const deleteWorkout = async (req, res, next) => {
+const deleteWorkout = async (req, res) => {
   try {
-    const workout = await Workout.findByIdAndDelete(req.params.id);
+    const workout = await Workout.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
 
     if (!workout) {
       return res.status(404).json({
@@ -159,21 +185,30 @@ const deleteWorkout = async (req, res, next) => {
       });
     }
 
-    const workoutExercises = await WorkoutExercise.find({
-      workout: req.params.id,
-    });
+    const workoutExercises =
+      await WorkoutExercise.find({
+        workout: workout._id,
+      });
 
-    const workoutExerciseIds = workoutExercises.map(
-      (workoutExercise) => workoutExercise._id,
-    );
+    const workoutExerciseIds =
+      workoutExercises.map(
+        (workoutExercise) =>
+          workoutExercise._id
+      );
 
     await Set.deleteMany({
-      workoutExercise: { $in: workoutExerciseIds },
+      workoutExercise: {
+        $in: workoutExerciseIds,
+      },
     });
 
     await WorkoutExercise.deleteMany({
-      workout: req.params.id,
+      workout: workout._id,
     });
+
+    await Workout.findByIdAndDelete(
+      workout._id
+    );
 
     res.status(200).json({
       message: "Workout deleted successfully",
@@ -185,13 +220,22 @@ const deleteWorkout = async (req, res, next) => {
       });
     }
 
-    next(error);
+    res.status(500).json({
+      message: "Failed to delete workout",
+      error: error.message,
+    });
   }
 };
 
-const getWorkoutExercises = async (req, res, next) => {
+const getWorkoutExercises = async (
+  req,
+  res
+) => {
   try {
-    const workout = await Workout.findById(req.params.id);
+    const workout = await Workout.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
 
     if (!workout) {
       return res.status(404).json({
@@ -199,26 +243,33 @@ const getWorkoutExercises = async (req, res, next) => {
       });
     }
 
-    const workoutExercises = await WorkoutExercise.find({
-      workout: req.params.id,
-    })
-      .populate("exercise")
-      .sort({ order: 1 });
-
-    const exercisesWithSets = await Promise.all(
-      workoutExercises.map(async (workoutExercise) => {
-        const sets = await Set.find({
-          workoutExercise: workoutExercise._id,
-        }).sort({ setNumber: 1 });
-
-        return {
-          ...workoutExercise.toObject(),
-          sets,
-        };
+    const workoutExercises =
+      await WorkoutExercise.find({
+        workout: workout._id,
       })
-    );
+        .populate("exercise")
+        .sort({ order: 1 });
 
-    res.status(200).json(exercisesWithSets);
+    const exercisesWithSets =
+      await Promise.all(
+        workoutExercises.map(
+          async (workoutExercise) => {
+            const sets = await Set.find({
+              workoutExercise:
+                workoutExercise._id,
+            }).sort({ setNumber: 1 });
+
+            return {
+              ...workoutExercise.toObject(),
+              sets,
+            };
+          }
+        )
+      );
+
+    res.status(200).json(
+      exercisesWithSets
+    );
   } catch (error) {
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -226,10 +277,13 @@ const getWorkoutExercises = async (req, res, next) => {
       });
     }
 
-    next(error);
+    res.status(500).json({
+      message:
+        "Failed to fetch workout exercises",
+      error: error.message,
+    });
   }
 };
-
 
 export {
   createWorkout,

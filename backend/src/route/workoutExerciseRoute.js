@@ -1,5 +1,5 @@
 import express from "express";
-
+import protect from "../middleware/authMiddleware.js";
 import {
   getSets,
   createSet,
@@ -7,7 +7,7 @@ import {
 
 const router = express.Router();
 
-router.get("/:workoutExerciseId/sets", getSets);
-router.post("/:workoutExerciseId/sets", createSet);
+router.get("/:workoutExerciseId/sets", protect, getSets);
+router.post("/:workoutExerciseId/sets", protect, createSet);
 
 export default router;
