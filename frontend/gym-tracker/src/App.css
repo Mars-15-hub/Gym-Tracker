@@ -458,3 +458,57 @@ select:focus {
   outline: 2px solid #1f2937;
   outline-offset: 1px;
 }
+
+.workout-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+  margin-bottom: 16px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  background: #f9fafb;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.summary-item strong {
+  font-size: 20px;
+}
+
+.summary-item span {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.details-toggle {
+  width: 100%;
+  padding: 10px;
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+}
+
+.details-toggle:hover {
+  background: #e5e7eb;
+}
+
+.workout-details {
+  margin-top: 16px;
+  padding-top: 4px;
+}
+
+.workout-exercise-display {
+  margin-bottom: 14px;
+}
+
+@media (max-width: 600px) {
+  .workout-summary {
+    grid-template-columns: 1fr;
+  }
+}

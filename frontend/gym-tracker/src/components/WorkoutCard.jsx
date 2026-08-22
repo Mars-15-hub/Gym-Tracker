@@ -5,6 +5,7 @@ import {
 } from "react";
 
 import WorkoutEditForm from "./WorkoutEditForm";
+import WorkoutSummary from "./WorkoutSummary";
 import LoadingSpinner from "./LoadingSpinner";
 import ErrorMessage from "./ErrorMessage";
 
@@ -23,6 +24,9 @@ const WorkoutCard = ({
   const { token } = useAuth();
 
   const [editing, setEditing] =
+    useState(false);
+
+  const [expanded, setExpanded] =
     useState(false);
 
   const [details, setDetails] =
@@ -116,6 +120,28 @@ const WorkoutCard = ({
     setEditing(false);
   };
 
+  const exerciseCount =
+    details.length;
+
+  const setCount = details.reduce(
+    (total, workoutExercise) =>
+      total +
+      workoutExercise.sets.length,
+    0
+  );
+
+  const totalVolume = details.reduce(
+    (workoutTotal, workoutExercise) =>
+      workoutTotal +
+      workoutExercise.sets.reduce(
+        (setTotal, set) =>
+          setTotal +
+          set.weight * set.reps,
+        0
+      ),
+    0
+  );
+
   if (editing) {
     return (
       <article className="workout-card">
@@ -159,90 +185,134 @@ const WorkoutCard = ({
         </div>
       </div>
 
-      <div className="workout-details">
-        <h4>Exercises</h4>
-
-        {detailsLoading ? (
-          <LoadingSpinner message="Loading exercises..." />
-        ) : detailsError ? (
-          <ErrorMessage
-            message={detailsError}
-            onRetry={loadDetails}
+      {detailsLoading ? (
+        <LoadingSpinner message="Loading workout details..." />
+      ) : detailsError ? (
+        <ErrorMessage
+          message={detailsError}
+          onRetry={loadDetails}
+        />
+      ) : (
+        <>
+          <WorkoutSummary
+            exerciseCount={
+              exerciseCount
+            }
+            setCount={setCount}
+            totalVolume={
+              totalVolume
+            }
           />
-        ) : details.length === 0 ? (
-          <p className="muted-text">
-            No exercises added.
-          </p>
-        ) : (
-          details.map(
-            (workoutExercise) => (
-              <div
-                className="workout-exercise-display"
-                key={
-                  workoutExercise._id
-                }
-              >
-                <div className="exercise-title">
-                  <strong>
-                    {
-                      workoutExercise
-                        .exercise.name
-                    }
-                  </strong>
 
-                  <span>
-                    {
-                      workoutExercise
-                        .exercise
-                        .muscleGroup
-                    }
-                  </span>
-                </div>
+          {details.length > 0 && (
+            <button
+              type="button"
+              className="details-toggle"
+              onClick={() =>
+                setExpanded(
+                  (current) =>
+                    !current
+                )
+              }
+              aria-expanded={
+                expanded
+              }
+            >
+              {expanded
+                ? "Hide Exercises"
+                : "View Exercises"}
+            </button>
+          )}
 
-                {workoutExercise.sets
-                  .length === 0 ? (
-                  <p className="muted-text">
-                    No sets recorded.
-                  </p>
-                ) : (
-                  <div className="sets-display">
-                    <div className="sets-display-header">
-                      <span>Set</span>
+          {expanded && (
+            <div className="workout-details">
+              {details.map(
+                (
+                  workoutExercise
+                ) => (
+                  <div
+                    className="workout-exercise-display"
+                    key={
+                      workoutExercise._id
+                    }
+                  >
+                    <div className="exercise-title">
+                      <strong>
+                        {
+                          workoutExercise
+                            .exercise
+                            .name
+                        }
+                      </strong>
+
                       <span>
-                        Weight
+                        {
+                          workoutExercise
+                            .exercise
+                            .muscleGroup
+                        }
                       </span>
-                      <span>Reps</span>
                     </div>
 
-                    {workoutExercise.sets.map(
-                      (set) => (
-                        <div
-                          className="sets-display-row"
-                          key={set._id}
-                        >
+                    {workoutExercise
+                      .sets.length ===
+                    0 ? (
+                      <p className="muted-text">
+                        No sets
+                        recorded.
+                      </p>
+                    ) : (
+                      <div className="sets-display">
+                        <div className="sets-display-header">
                           <span>
-                            {
-                              set.setNumber
-                            }
+                            Set
                           </span>
-
                           <span>
-                            {set.weight} kg
+                            Weight
                           </span>
-
                           <span>
-                            {set.reps}
+                            Reps
                           </span>
                         </div>
-                      )
+
+                        {workoutExercise.sets.map(
+                          (set) => (
+                            <div
+                              className="sets-display-row"
+                              key={
+                                set._id
+                              }
+                            >
+                              <span>
+                                {
+                                  set.setNumber
+                                }
+                              </span>
+
+                              <span>
+                                {
+                                  set.weight
+                                }{" "}
+                                kg
+                              </span>
+
+                              <span>
+                                {
+                                  set.reps
+                                }
+                              </span>
+                            </div>
+                          )
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
-            )
-          )
-        )}
-      </div>
+                )
+              )}
+            </div>
+          )}
+        </>
+      )}
 
       {actionError && (
         <ErrorMessage
