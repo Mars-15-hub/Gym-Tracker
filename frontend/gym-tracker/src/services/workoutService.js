@@ -95,9 +95,64 @@ const addSet = async (
   return data;
 };
 
+const updateWorkout = async (
+  workoutId,
+  workout,
+  token
+) => {
+  const response = await fetch(
+    `${API_URL}/workouts/${workoutId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(workout),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Failed to update workout"
+    );
+  }
+
+  return data;
+};
+
+const deleteWorkout = async (
+  workoutId,
+  token
+) => {
+  const response = await fetch(
+    `${API_URL}/workouts/${workoutId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Failed to delete workout"
+    );
+  }
+
+  return data;
+};
+
 export {
   getWorkouts,
   createWorkout,
   addExerciseToWorkout,
   addSet,
+  updateWorkout,
+  deleteWorkout,
 };

@@ -3,34 +3,27 @@ import { useEffect, useState } from "react";
 import WorkoutCard from "../components/WorkoutCard";
 import WorkoutForm from "../components/WorkoutForm";
 
-import {
-  getWorkouts,
-} from "../services/workoutService";
+import { getWorkouts } from "../services/workoutService";
 
 import useAuth from "../hooks/useAuth";
 
 const WorkoutList = () => {
   const { token } = useAuth();
 
-  const [workouts, setWorkouts] =
-    useState([]);
+  const [workouts, setWorkouts] = useState([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [showForm, setShowForm] =
-    useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     const fetchWorkouts = async () => {
       try {
         setLoading(true);
 
-        const data =
-          await getWorkouts(token);
+        const data = await getWorkouts(token);
 
         setWorkouts(data);
       } catch (error) {
@@ -44,10 +37,7 @@ const WorkoutList = () => {
   }, [token]);
 
   const handleWorkoutCreated = (workout) => {
-    setWorkouts((currentWorkouts) => [
-      workout,
-      ...currentWorkouts,
-    ]);
+    setWorkouts((currentWorkouts) => [workout, ...currentWorkouts]);
 
     setShowForm(false);
   };
@@ -59,6 +49,20 @@ const WorkoutList = () => {
   if (error) {
     return <p>{error}</p>;
   }
+
+  const handleWorkoutUpdated = (updatedWorkout) => {
+    setWorkouts((currentWorkouts) =>
+      currentWorkouts.map((workout) =>
+        workout._id === updatedWorkout._id ? updatedWorkout : workout,
+      ),
+    );
+  };
+
+  const handleWorkoutDeleted = (workoutId) => {
+    setWorkouts((currentWorkouts) =>
+      currentWorkouts.filter((workout) => workout._id !== workoutId),
+    );
+  };
 
   return (
     <main>
@@ -101,6 +105,8 @@ const WorkoutList = () => {
             <WorkoutCard
               key={workout._id}
               workout={workout}
+              onWorkoutUpdated={handleWorkoutUpdated}
+              onWorkoutDeleted={handleWorkoutDeleted}
             />
           ))}
         </div>
